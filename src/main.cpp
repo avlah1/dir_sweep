@@ -13,6 +13,8 @@ bool sweep(const string& path) {
   const path_vector* poss_dups = new (path_vector);
   const path_vector* non_dups = new (path_vector);
   scan_dir(path, &poss_dups, &non_dups);
+
+  
   return true;
 }
 
