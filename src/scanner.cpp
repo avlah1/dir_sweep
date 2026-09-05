@@ -14,6 +14,7 @@ static void print_maps(const path_vector* poss_dups_ptr,
 bool scan_dir(const string& rootdir,
               const path_vector** poss_dups_ret,
               const path_vector** non_dups_ret) {
+  // Map size to paths
   uintmax_to_path_map size_to_paths;
   for (const auto& p : fs::recursive_directory_iterator(rootdir)) {
     if (fs::is_regular_file(p)) {
@@ -21,6 +22,7 @@ bool scan_dir(const string& rootdir,
     }
   }
   print_size_to_paths(size_to_paths);
+  // Split the map entries into piles: one for paths to files that have the same size of at least one other file, and one for those that don't fit that category
   sort_paths(size_to_paths, poss_dups_ret, non_dups_ret);
   print_maps(*poss_dups_ret, *non_dups_ret);
   return true;
@@ -30,8 +32,8 @@ static bool sort_paths(const uintmax_to_path_map& size_to_paths,
                        const path_vector** poss_dups_ret,
                        const path_vector** non_dups_ret) {
   
-  path_vector* same_size = new(path_vector);
-  path_vector* diff_size = new(path_vector);
+  path_vector* same_size = new(path_vector); // Files that have the same amount of bytes as at least one other file
+  path_vector* diff_size = new(path_vector); // Files that do not have the same amount of bytes as any other file
   for (const auto& e : size_to_paths) {
     path_vector paths = e.second;
     if (paths.size() > 1) {
