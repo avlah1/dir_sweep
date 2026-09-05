@@ -36,9 +36,11 @@ static bool sort_paths(const uintmax_to_path_map& size_to_paths,
   path_vector* diff_size = new(path_vector); // Files that do not have the same amount of bytes as any other file
   for (const auto& e : size_to_paths) {
     path_vector paths = e.second;
+    // If there is byte size that has more than one paths with the same number of bytes, add that vector of paths to the same_size vector
     if (paths.size() > 1) {
       path_vector::iterator it = same_size->begin();
       same_size->insert(it, paths.begin(), paths.end());
+      // Otherwise, put it in the different size vector
     } else {
       diff_size->push_back(paths[0]);
     }
