@@ -1,54 +1,94 @@
 #include "../include/scanner.h"
 
 // *** STATIC HELPER DECLARATIONS *** //
-static bool sort_paths(const uintmax_to_path_map& size_to_paths,
-                       const path_vector** poss_dups_ret,
-                       const path_vector** non_dups_ret);
+static bool sort_paths(uintmax_to_path_map& size_to_paths,
+                       path_vector& uniques);
+                       
 
 static void print_size_to_paths(const uintmax_to_path_map& size_to_paths);
 
-static void print_maps(const path_vector* poss_dups_ptr,
-                       const path_vector* non_dups_ptr);
+static void print_vec(const path_vector& vec);
+
+static bool handle_dups(uintmax_to_path_map& size_to_paths,
+                     path_vector& uniques,
+                     path_vector& to_delete);
 // ********************************** //
 
 bool scan_dir(const string& rootdir,
-              const path_vector** poss_dups_ret,
-              const path_vector** non_dups_ret) {
-  // Map size to paths
+              uintmax_to_path_map* duplicates_ptr,
+              path_vector* uniques_ptr) {
   uintmax_to_path_map size_to_paths;
+  path_vector uniques, to_delete;
   for (const auto& p : fs::recursive_directory_iterator(rootdir)) {
     if (fs::is_regular_file(p)) {
       size_to_paths[fs::file_size(p)].push_back(p);
     }
   }
-  print_size_to_paths(size_to_paths);
-  // Split the map entries into piles: one for paths to files that have the same size of at least one other file, and one for those that don't fit that category
-  sort_paths(size_to_paths, poss_dups_ret, non_dups_ret);
-  print_maps(*poss_dups_ret, *non_dups_ret);
+  sort_paths(size_to_paths, uniques);
+  // size_to_paths now contains only pairs who have vectors of size 2 or more
+  // uniques now contains the pairs removed from the map
+
+  handle_dups(size_to_paths, uniques, to_delete);
+  for (const auto& p : uniques) {
+    if (is_week_old(p)) {
+      to_delete.push_back(p);
+    }
+  }
   return true;
 }
 
-static bool sort_paths(const uintmax_to_path_map& size_to_paths,
-                       const path_vector** poss_dups_ret,
-                       const path_vector** non_dups_ret) {
-  
-  path_vector* same_size = new(path_vector); // Files that have the same amount of bytes as at least one other file
-  path_vector* diff_size = new(path_vector); // Files that do not have the same amount of bytes as any other file
-  for (const auto& e : size_to_paths) {
-    path_vector paths = e.second;
-    // If there is byte size that has more than one paths with the same number of bytes, add that vector of paths to the same_size vector
-    if (paths.size() > 1) {
-      path_vector::iterator it = same_size->begin();
-      same_size->insert(it, paths.begin(), paths.end());
-      // Otherwise, put it in the different size vector
-    } else {
-      diff_size->push_back(paths[0]);
+static bool handle_dups(uintmax_to_path_map& size_to_paths,
+                     path_vector& uniques,
+                     path_vector& to_delete) {
+  uintmax_to_path_map paths_hashmap;
+  uintmax_to_path_map::iterator it = size_to_paths.begin();
+  while (it != size_to_paths.end()) {
+    path_vector paths = it->second;
+    for (const auto& p : paths) {
+      std::ifstream file(p, std::ios::binary);
+      std::vector<char> bytes(
+        (std::istreambuf_iterator<char>(file)),
+        (std::istreambuf_iterator<char>()));
+      uint64_t hash = fnvla_64(bytes.data(), bytes.size());
+      paths_hashmap[hash].push_back(p);
     }
+    it++;
   }
-  *poss_dups_ret = same_size;
-  *non_dups_ret = diff_size;
+  // need to iterate over the paths hashmap. for every pair that has vec of size 1, push to uniques
+  // otherwise, we need to sort the vector by last modify date
+  for (const auto& e : paths_hashmap) {
+    path_vector paths = e.second;
+    if (paths.size() == 1) {
+      uniques.push_back(paths[0]);
+    } else {
+      sort(paths.begin(), paths.end(), &is_older_file);
+      // now the paths are sorted, with the first path being the one we will keep
+      // TODO: Make better, more idiomatic C++. For now this is the way i figured out how to do it.
+      uniques.push_back(paths[0]);
+      for (size_t i = 1; i < paths.size(); i++) {
+        to_delete.push_back(paths[i]);
+      }
+       print_vec(uniques);
+       print_vec(to_delete);
+    }  
+  } 
   return true;
 }
+static bool sort_paths(uintmax_to_path_map& size_to_paths,
+                       path_vector& uniques) {
+  uintmax_to_path_map::iterator it = size_to_paths.begin();
+  while (it != size_to_paths.end()) {
+    path_vector paths = it->second;
+    if (paths.size() <= 1) {
+      uniques.push_back(paths[0]);
+      it = size_to_paths.erase(it);
+    } else {
+      it++;
+    }
+  }
+  return true;
+}
+
 
 // *** HELPERS FOR DEBUGGING ETC *** //
 static void print_size_to_paths(const uintmax_to_path_map& size_to_paths) {
@@ -63,16 +103,9 @@ static void print_size_to_paths(const uintmax_to_path_map& size_to_paths) {
   }
 }
 
-static void print_maps(const path_vector* poss_dups_ptr,
-                       const path_vector* non_dups_ptr) {
-  path_vector poss_dups = *poss_dups_ptr;
-  path_vector  non_dups = *non_dups_ptr;
-  cout << "The following paths belong to files that may be duplicates of each other:" << endl;
-  for (const auto& p : poss_dups) {
-    cout << "\t" << p << endl;
-  }
-  cout << "The following paths belong to files that are unique:" << endl;
-  for (const auto& p : non_dups) {
+static void print_vec(const path_vector& vec) {
+  cout << "Path vector:" << endl;
+  for (const auto& p : vec) {
     cout << "\t" << p << endl;
   }
 }
