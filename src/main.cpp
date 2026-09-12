@@ -11,7 +11,7 @@ int main (int argc, char** argv) {
 }
 
 bool sweep(const string& path) {
-  const path_vector* poss_dups = new (path_vector);
+  const path_vector* poss_dups = new (path_vector); // change these to just regular vectors and pass a const reference instead
   const path_vector* non_dups = new (path_vector);
   scan_dir(path, &poss_dups, &non_dups);
 
@@ -24,6 +24,7 @@ bool sweep(const string& path) {
          (std::istreambuf_iterator<char>()));
     uint64_t hash = fnvla_64(bytes.data(), bytes.size());
     file_hashmap[hash].push_back(p);
+    file.close();
   }
   // call rules is duplicate
 
