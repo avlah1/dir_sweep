@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -g -Wextra -std=c++17
+CFLAGS = -g -Wextra -std=c++20
 
 TARGET = dir_sweep
 SRCS = $(wildcard src/*.cpp)
