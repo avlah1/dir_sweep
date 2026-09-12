@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <algorithm>
 
 namespace fs = std::filesystem;
 namespace ch = std::chrono;
