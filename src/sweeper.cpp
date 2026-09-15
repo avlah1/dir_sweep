@@ -65,7 +65,9 @@ static bool scan_dir(const std::string& path,
     if (file_time_expired(p)) {
       to_delete.push_back(p);
       // LOG
-      std::cout << "\t\t" << path << "set for deletion, reason: older than " << THRESHOLD << "days" << std::endl;
+      std::cout << "\t\tdeleting: " << p << ", reason: older than " << THRESHOLD << " days" << std::endl;
+    } else {
+      std::cout << "\t\tkeeping: " << p << ", reason: newer than " << THRESHOLD << " days" << std::endl;
     }
   }
   return true;
@@ -122,7 +124,7 @@ static bool process_files_hashmap(uintmax_to_path_map& files_hashmap,
       for (size_t i = 1; i < paths.size(); i++) {
         to_delete.push_back(paths[i]);
         // LOG
-        std::cout << "\t\t" << paths[i] << "set for deletion, reason: duplicate " << std::endl;
+        std::cout << "\t\tdeleting: " << paths[i] << ", reason: identical to " << paths[0] << std::endl;
       }
     }  
   } 
