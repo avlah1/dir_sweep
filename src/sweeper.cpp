@@ -22,11 +22,21 @@ static bool process_files_hashmap(uintmax_to_path_map& file_hashmap,
 
 bool sweep(const std::string& root_dir) {
   path_vector to_delete;
+  if (!fs::exists(root_dir)) {
+    // LOG
+    std::cout << "path does not exist: " << root_dir << std::endl;
+    return false;
+  }
   scan_dir(root_dir, to_delete);
-  std::cout << "Final to_delete vector:" << std::endl;
-  print_vector(to_delete);
   for (const auto& p : to_delete) {
-    remove(p);
+    std::error_code ec;
+    bool success = fs::remove(p);
+    // LOGS
+    if (!success && ec) {
+      std::cerr << "\t\tDeletion failed: " << ec.message() << " (Code " << ec.value() << "\n)";
+    } else {
+      std::cout << "\t\tDeletion successful: " << p << std::endl; 
+    }
   }
   return true;
 }
@@ -41,13 +51,9 @@ static bool scan_dir(const std::string& path,
       size_to_paths[fs::file_size(p)].push_back(p);
     }
   }
-  std::cout << "Before extract_uniques: " << std::endl;
-  print_map(size_to_paths);
+  
   // After the function call below, size_to_paths only contains mappings to possible duplicate files
   extract_uniques(size_to_paths, uniques);
-  std::cout << "After extract_uniques: " << std::endl;
-  print_map(size_to_paths);
-  print_vector(uniques);
   if (size_to_paths.size() > 0) {
     uintmax_to_path_map files_hashmap;
     fill_files_hashmap(size_to_paths, files_hashmap);
@@ -57,8 +63,9 @@ static bool scan_dir(const std::string& path,
   }
   for (const auto& p : uniques) {
     if (file_time_expired(p)) {
-      std::cout << "old: " << std::endl;
       to_delete.push_back(p);
+      // LOG
+      std::cout << "\t\t" << path << "set for deletion, reason: older than " << THRESHOLD << "days" << std::endl;
     }
   }
   return true;
@@ -114,6 +121,8 @@ static bool process_files_hashmap(uintmax_to_path_map& files_hashmap,
       uniques.push_back(paths[0]);
       for (size_t i = 1; i < paths.size(); i++) {
         to_delete.push_back(paths[i]);
+        // LOG
+        std::cout << "\t\t" << paths[i] << "set for deletion, reason: duplicate " << std::endl;
       }
     }  
   } 
