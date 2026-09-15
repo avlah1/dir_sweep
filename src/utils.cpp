@@ -12,7 +12,6 @@ uint64_t fnvla_64(const void* data, size_t size) {
 
 // TODO: I don't trust this function! Look into it when you have internet. Why is file time neg?
 bool comp_file_times(const fs::path a, const fs::path b) {
-  // so if a is older than b, return true
 
   fs::file_time_type a_time = fs::last_write_time(a);
   fs::file_time_type b_time = fs::last_write_time(b);
@@ -26,8 +25,8 @@ bool file_time_expired(const fs::path& path) {
  
   ch::time_point file_time = fs::last_write_time(path);
   ch::time_point now = fs::__file_clock::now();
-  
-  return file_time < now - ch::hours(24 * THRESHOLD);
+ 
+  return file_time < now - ch::days(THRESHOLD);
 }
 
 void print_vector(const path_vector& vec) {

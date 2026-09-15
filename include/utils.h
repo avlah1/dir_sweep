@@ -1,3 +1,6 @@
+#ifndef UTILS_H_
+#define UTILS_H_
+
 #include <iostream>
 #include <string>
 #include <cstdint>
@@ -6,7 +9,7 @@
 #include <vector>
 #include <map>
 
-#define THRESHOLD 7
+#define THRESHOLD 3
 
 namespace fs = std::filesystem;
 namespace ch = std::chrono;
@@ -26,3 +29,5 @@ bool file_time_expired(const fs::path& path);
 void print_vector(const path_vector& vec);
 
 void print_map(const uintmax_to_path_map& map);
+
+#endif
