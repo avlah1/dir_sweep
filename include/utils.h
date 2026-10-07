@@ -9,7 +9,7 @@
 #include <vector>
 #include <map>
 
-#define THRESHOLD 3
+#define THRESHOLD 2
 
 namespace fs = std::filesystem;
 namespace ch = std::chrono;
