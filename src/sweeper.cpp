@@ -119,7 +119,6 @@ static bool process_files_hashmap(uintmax_to_path_map& files_hashmap,
       uniques.push_back(paths[0]);
     } else {
       sort(paths.begin(), paths.end(), &comp_file_times);
-      // TODO: Make better, more idiomatic C++. For now this is the way i figured out how to do it.
       uniques.push_back(paths[0]);
       for (size_t i = 1; i < paths.size(); i++) {
         to_delete.push_back(paths[i]);
